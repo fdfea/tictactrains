@@ -1,0 +1,178 @@
+body {
+    font-size: 14px;
+    font-family: Helvetica, Arial, sans-serif;
+    margin: 20px;
+    text-align: center;
+    padding: 0px 0px 0px 0px !important;
+    margin: 0px 0px 0px 0px !important;
+    overflow-x: hidden !important;
+}
+
+.app {
+    padding: 0px 0px 0px 0px !important;
+    margin: 0px 0px 0px 0px !important;
+    overflow-x: hidden !important;
+}
+  
+.board-row:after {
+    clear: both;
+    content: "";
+    display: table;
+}
+  
+.status {
+    margin-bottom: 10px;
+}
+  
+.square {
+    background: #fff;
+    border: 1px solid #999;
+    float: left;
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 50px;
+    font-weight: normal;
+    line-height: 50px;
+    height: 60px;
+    margin-right: -1px;
+    margin-top: -1px;
+    padding: 0;
+    text-align: center;
+    width: 60px;
+}
+  
+.square:focus {
+    outline: none;
+}
+
+.square:hover {
+    background-color: rgb(211, 211, 211);
+}
+  
+.kbd-navigation .square:focus {
+    background: #ddd;
+}
+  
+.game {
+    display: inline-block;
+    flex-direction: column;
+}
+
+.game h3 {
+    padding: 10px 0px 0px 0px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.game p {
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    padding: 0px 0px 0px 0px;
+    margin-bottom: 10px;
+    margin-top: 0px;
+}
+
+.game-info {
+    margin-left: 20px;
+}
+
+.title {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 40px;
+    margin-bottom: 10px;
+}
+
+.main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+  
+.room-button {
+    margin-top: 6px;
+    margin-bottom: 6px;
+    background-color: rgb(250, 182, 94);
+    height: 32px;
+    width: 100%;
+    display: block;
+    outline: none;
+    border-style: solid;
+    border-width: 1px;
+    text-align: center;
+    border-radius: 4px;
+}
+
+.room-button:focus {
+    outline: black;
+}
+
+.room-button:hover {
+    background-color: rgb(251, 212, 176);
+}
+
+.vertical-list {
+    display: block;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    height: auto; 
+    width: auto;
+}
+
+.vertical-list p {
+    font-size: 18px;
+    font-weight: normal;
+    margin-left: auto;
+    margin-right: auto;
+    height: auto; 
+    width: auto;
+}
+
+.about {
+    text-align: left;
+    padding: 20px 30% 20px 30px;
+}
+
+.configForm div {
+    display: block;
+}
+
+.configForm input[type=text], .configForm select {
+    width: 100%;
+    padding: 4px 20px;
+    margin-left: 20px;
+    margin-right: 20px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    display: block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+
+.configForm label {
+    width: 100%;
+    padding: 0px 20px;
+    display: block;
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: -2px;
+    margin-top: -2px;
+}
+
+.configForm input[type=submit] {
+    width: 100%;
+    background-color: #448B00;
+    color: white;
+    padding: 10px 20px;
+    margin-left: 20px;
+    margin-right: 20px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    display: block;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
