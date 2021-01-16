@@ -12,6 +12,6 @@
         "allowJs": true
     },
     "include": [
-      "**/*.ts", "src/tictactrains.js"
+      "**/*.ts", "server/src/tictactrains.js"
     ]
 }

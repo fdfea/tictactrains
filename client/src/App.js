@@ -1,6 +1,6 @@
 import React from "react";
 import { Switch, Route, Link } from "react-router-dom";
-import { Navbar, Nav/*, Button*/ } from "react-bootstrap";
+import { Navbar, Nav } from "react-bootstrap";
 
 import { ConfigForm } from "./ConfigForm.js";
 import { LocalGame } from "./LocalGame.js";
@@ -63,7 +63,6 @@ export default class App extends React.Component {
         return (
             <div className="app">
                 <Navbar bg="dark" variant="dark">
-                    {/*<Navbar.Brand as={Link} to="/">TicTacTrains</Navbar.Brand>*/}
                     <Navbar.Brand as={Link} to="/">
                         <img src="/brand.png" width="32" height="32" alt="TicTacTrains"/>
                     </Navbar.Brand>
@@ -71,7 +70,7 @@ export default class App extends React.Component {
                         <Nav.Link as={Link} to="/">Home</Nav.Link>
                         <Nav.Link as={Link} to="/about">About</Nav.Link>
                     </Nav>
-                    {/*<Button variant="success">Login</Button>*/}
+                    <Navbar.Brand>TicTacTrains</Navbar.Brand>
                 </Navbar>
 
                 <Switch>

@@ -1,9 +1,9 @@
-import React from 'react';
+import React from "react";
 
-import { TicTacTrains } from './tictactrains.js';
-import { TicTacTrainsBoard } from './TicTacTrainsBoard.js';
+import { TicTacTrains } from "./tictactrains.js";
+import { TicTacTrainsBoard } from "./TicTacTrainsBoard.js";
 
-import './App.css';
+import "./App.css";
 
 export class LocalGame extends React.Component {
 

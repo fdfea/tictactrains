@@ -1,13 +1,16 @@
 {
   "name": "client",
   "version": "0.1.0",
+  "description": "TicTacTrains React client",
   "private": true,
+  "author": "fdfea",
   "dependencies": {
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
     "bootstrap": "^4.5.3",
     "colyseus.js": "^0.13.1",
+    "dotenv": "^8.2.0",
     "react": "^16.13.1",
     "react-bootstrap": "^1.4.3",
     "react-dom": "^16.13.1",

@@ -1,10 +1,10 @@
-import React from 'react';
-import Module from './ttt.mjs'
+import React from "react";
+import Module from "./ttt.mjs";
 
-import { TicTacTrains } from './tictactrains.js';
-import { TicTacTrainsBoard } from './TicTacTrainsBoard.js';
+import { TicTacTrains } from "./tictactrains.js";
+import { TicTacTrainsBoard } from "./TicTacTrainsBoard.js";
 
-import './App.css';
+import "./App.css";
 
 let Engine;
 Module().then(engine => {

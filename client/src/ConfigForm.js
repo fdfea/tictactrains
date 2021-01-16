@@ -1,6 +1,6 @@
-import React from 'react';
+import React from "react";
 
-import './App.css';
+import "./App.css";
 
 export class Select extends React.Component {
 

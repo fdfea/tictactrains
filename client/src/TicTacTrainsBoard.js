@@ -1,8 +1,8 @@
-import React from 'react';
+import React from "react";
 
 import { TicTacTrains } from "./tictactrains.js";
 
-import './App.css';
+import "./App.css";
 
 const Square = (props) => {
     return (

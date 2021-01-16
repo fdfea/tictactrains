@@ -1,15 +1,12 @@
-import React from 'react';
-import * as Colyseus from 'colyseus.js';
+import React from "react";
+import * as Colyseus from "colyseus.js";
 
-import { TicTacTrains } from './tictactrains.js';
-import { TicTacTrainsBoard } from './TicTacTrainsBoard.js';
+import { TicTacTrains } from "./tictactrains.js";
+import { TicTacTrainsBoard } from "./TicTacTrainsBoard.js";
 
-import './App.css';
+import "./App.css";
 
-//($env:HTTPS = "true") -and (npm start)
-const WS = "ws://localhost:5000";
-//const WS = 'wss://localhost:5000';
-//const WS = 'wss://91987daff954.ngrok.io';
+const WS = process.env.REACT_APP_SERVER_ADDRESS;
 const client = new Colyseus.Client(WS);
 
 export class OnlineGame extends React.Component {
@@ -93,8 +90,6 @@ export class OnlineGame extends React.Component {
 
 const LobbyRoomButton = (props) => {
     let rules, player;
-    console.log("Rules: " + props.rules);
-    console.log("Player: " + props.player);
     switch (props.rules) {
         case 1: rules = "Classical"; break;
         case 2: rules = "Modern"; break;
@@ -107,7 +102,6 @@ const LobbyRoomButton = (props) => {
         case 2: player = "?"; break;
         default: player = ""; break;
     }
-    console.log("Rules: " + rules + ", Player: " + player);
     return (
         <button className="room-button" onClick={props.onClick}>
             <strong>Room Id: </strong>{props.roomId},
@@ -130,6 +124,7 @@ class LobbyList extends React.Component {
     }
 
     componentDidMount = () => {
+        this.getLobby();
         this.timer = setInterval(() => this.getLobby(), LOBBY_UPDATE_INTERVAL_MS);
     }
 
@@ -145,7 +140,6 @@ class LobbyList extends React.Component {
         let rooms = [];
         client.getAvailableRooms("tictactrains").then(newRooms => {
             newRooms.forEach(room => {
-                console.log(room.roomId, room.clients, room.maxClients, room.metadata);
                 rooms.push(room);
             });
             this.setState({rooms});
