@@ -50,7 +50,7 @@ export class OnlineGame extends React.Component {
                 this.setState(this.state);
             });
             this.state.room.onMessage("finished", (score) => {
-                this.setState({score: "Score: " + score});
+                this.setState({score});
             });
         });
     }
@@ -70,8 +70,12 @@ export class OnlineGame extends React.Component {
     }
 
     render = () => {
-        const score = (this.state.score) ? <p>{this.state.score}</p> : null;
-        const lobby = (!this.state.room || score) ? <LobbyList tryJoinRoom={this.tryJoinRoom}/> : null;
+        const score = (this.state.score) 
+            ? <p className="score">Score: <span>{this.state.score}</span></p> 
+            : null;
+        const lobby = (!this.state.room || score) 
+            ? <LobbyList tryJoinRoom={this.tryJoinRoom}/> 
+            : null;
         return (
             <div>
                 <div className="game">

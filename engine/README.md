@@ -1,23 +1,67 @@
-# **TicTacTrains C Engine**
+# **TicTacTrains Engine**
 
-### Table of Contents
+### **Table of Contents**
 1. [Summary](#summary)
-2. [About](#about)
-3. [Compiling](#compiling)
-4. [Usage](#usage)
-5. [Credits](#credits)
+2. [Compiling](#compiling)
+3. [Usage](#usage)
+4. [Game Mechanics](#game-mechanics)
+5. [Explanation of AI](#explanation-of-ai)
+6. [Credits](#credits)
 
-### Summary 
+### **Summary**
 
 An implementation of the board game TicTacTrains in C, including an artificially intelligent computer opponent and configurable rules. 
 
-A website to play against live opponents and the computer online will be available soon! 
+### **Compiling**
 
-### About
+##### **Compiling from Source**
+
+It is not very difficult to compile the TicTacTrains Engine directly from the source files. The command I most commonly use (on Windows with GCC from the `src\` directory) is:  
+`gcc -Wall -O3 -lm -o tictactrains *.c`
+
+After the program is compiled successfully, it can be run (on Windows) as:  
+`.\tictactrains.exe`
+
+##### **Compiling with CMake**
+
+You can also compile the TicTactrains Engine with CMake. An example command (on Windows with MinGW-w64 from the root directory of the project) is:  
+`cmake -S .\ -B .\build\ -G "MinGW Makefiles"`  
+`cd .\build\`  
+`mingw32-make`
+
+##### **Extra Compile-time Definitions**
+
+I recommend that you always compile the program with maximum performance optimization, namely the `-O3` flag, as it significantly speeds up the AI. There are a few other options that can be specified when compiling to add some advanced features or to print extra information during the game. To add them with GCC, use the `-D<DEF>` compiler flag. For example, `gcc ... -DDEBUG ... -o tictactrains *.c`. To add them with CMake, edit `CMakeLists.txt`, uncomment the `add_definitions()` line, and add the desired options. For example, `add_definitions(-DDEBUG ...)`. 
+
+The options available are:
+* `DEBUG` – Print any relevant debug information (will make the program slower)
+* `STATS` – Print statistics for the computer opponent search tree on each move
+* `TIMED` – Print the time the computer spent simulating on each move
+* `PACKED` – Pack the structs in the search tree to reduce memory usage (may be slower on some architectures)
+* `VISITS32` – Use a 32-bit integer for node visits in the search tree to allow for deeper searches (default is 16-bit)
+
+### **Usage**
+
+After starting the program, you will be asked to input your move according to the rule set. A valid move is two characters without a space corresponding to a valid square on the board, e.g. `d4`. Press enter to submit your move. If an entered move is invalid, you will be prompted until the move is valid. When playing against the computer, it will automatically make its move after you have submitted yours. When playing without the computer, the prompt will indicate which player should enter their move. After the game is finished, the score will be displayed and the program will exit. 
+
+##### **Configuration**
+
+The program reads from a configuration file, `ttt.conf`, to configure the game at runtime. 
+
+The options are: 
+* `COMPUTER_PLAYING` – Whether or not to play against the computer
+* `COMPUTER_PLAYER` – Whether the computer will be X or O
+* `RULES_TYPE` – The type of rules to play with
+* `SIMULATIONS` – How many times the computer should simulate before moving
+* `SCORING_ALGORITHM` – The algorithm to score simulations when not predicting
+* `PREDICTION_POLICY` – When the computer should predict the score of simulations
+* `PREDICTION_STRATEGY` – How the computer should predict the outcome of a simulation
+
+See the configuration file for additional details. 
+
+### **Game Mechanics**
 
 TicTacTrains is an abstract strategy game that has been likened to a combination of the popular pencil-and-paper games Tic-Tac-Toe and Dots and Boxes. 
-
-##### Game Mechanics
 
 Two players take turns placing pieces on the 7x7 board until all the squares are filled. The first player's pieces are X's and the second player's pieces are O's. The goal is to create a longer train of pieces than your opponent, connected horizontally and vertically, but not diagonally. If both players' longest train is the same length, the game ends in a draw. Once a player places a piece on a square, that piece is locked for the remainder of the game, and a piece cannot be placed on a square that is already occupied. An example of a finished board is depicted below. 
 
@@ -75,7 +119,7 @@ When the rules only allow a player to make a move in certain squares, the board 
 
 A few rule sets are provided. The default is "Classical" rules, which is notated as "(XA, OA, ...)". This means that each player alternates on every turn and can go in any square, hence the "A". One of the other rule sets provided is "Modern" rules, which is notated as "(XA, O1, O3, XA, OA, ...)". This means that X goes once anywhere, O goes twice (once in ring 1 and once in ring 3), and then the players alternate for the rest of the game, going wherever is available. Additional rules can be created by modifying the code. 
 
-##### Explanation of AI
+### **Explanation of AI**
 
 The artificially intelligent opponent uses the Monte Carlo Tree Search algorithm. Essentially, it works by expanding a search tree from the current game state. The AI strategically works its way down the tree until it finds a leaf node and then expands the node's children. Then it simulates a playout from one of the new nodes and propagates the result back up to the root of the tree. It repeats this process for a given number of simulations. The tree looks like a minimax tree, but the nodes with the best score are explored more, and the root child with the most visits is ultimately the one that the AI chooses. This allows the AI to avoid exploring nodes that are statistically unlikely to be good, saving a lot of time compared to minimax. You will find that the AI is very strong with 10000 or more simulations per move, taking an average of about 400 ms on my machine, when optimal scoring and sufficient compiler optimization are used. 
 
@@ -100,53 +144,6 @@ The multilayer perceptron neural network regressor predicts the outcome of a gam
 
 The models were each trained with millions of randomly simulated games. They make the AI faster and no longer scale with path length, but are less accurate when a high degree of precision is needed (in the endgame) as a result of the models' criteria for a win being slightly different than the true criteria due to information loss during feature extraction. I will also note that it not expected that these models would be extremely accurate because the problem for scoring the game is NP-hard, so you wouldn't expect that there would be a way to do it with extreme accuracy in much less time. 
 
-### Compiling
-
-##### Compiling directly from source
-
-It is not very difficult to compile TicTacTrains C Engine directly from the source files. The command I most commonly use (on Windows with GCC from the `src\` directory) is:  
-`gcc -Wall -O3 -lm -o tictactrains *.c`
-
-After the program is compiled successfully, it can be run (on Windows) as:  
-`.\tictactrains.exe`
-
-##### Compiling with CMake
-
-You can also compile TicTactrains C Engine is with CMake. An example command (on Windows with MinGW-w64 from the root directory of the project) is:  
-`cmake -S .\ -B .\build\ -G "MinGW Makefiles"`  
-`cd .\build\`  
-`mingw32-make`
-
-##### Extra Compile-time Definitions
-
-I recommend that one always compile the program with maximum performance optimization, namely the `-O3` flag, as it significantly speeds up the AI. There are a few other options that can be specified when compiling to add some advanced features or to print extra information during the game. To add them with GCC, use the `-D<DEF>` compiler flag. For example, `gcc ... -DDEBUG ... -o tictactrains *.c`. To add them with CMake, edit `CMakeLists.txt`, uncomment the `add_definitions()` line, and add the desired options. For example, `add_definitions(-DDEBUG ...)`. 
-
-The options available are:
-* `DEBUG` -- Print any relevant debug information (will make the program noticeably slower)
-* `STATS` -- Print statistics for the computer opponent search tree on each move
-* `TIMED` -- Print the time the computer spent simulating on each move
-* `PACKED` -- Pack the structs in the search tree to reduce memory usage (may be slower on some architectures)
-* `VISITS32` -- Use a 32-bit integer for node visits in the search tree to allow for deeper searches (default is 16-bit)
-
-### Usage
-
-After starting the program, you will be asked to input your move according to the rule set. A valid move is two characters without a space corresponding to a valid square on the board, e.g. `d4`. Press enter to submit your move. If an entered move is invalid, you will be prompted until the move is valid. When playing against the computer, it will automatically make its move after you have submitted yours. When playing without the computer, the prompt will indicate which player should enter their move. After the game is finished, the score will be displayed and the program will exit. 
-
-##### Configuration
-
-The program reads from a configuration file, `ttt.conf`, to configure the game at runtime. 
-
-The options are: 
-* `COMPUTER_PLAYING` -- Whether or not to play against the computer
-* `COMPUTER_PLAYER` -- Whether the computer will be X or O
-* `RULES_TYPE` -- The type of rules to play with
-* `SIMULATIONS` -- How many times the computer should simulate before moving
-* `SCORING_ALGORITHM` -- The algorithm to score simulations when not predicting
-* `PREDICTION_POLICY` -- When the computer should predict the score of simulations
-* `PREDICTION_STRATEGY` -- How the computer should predict the outcome of a simulation
-
-See the configuration file for additional details. 
-
-### Credits
+### **Credits**
 
 Developer and Creator - Forrest Feaser ([@fdfea](https://github.com/fdfea))

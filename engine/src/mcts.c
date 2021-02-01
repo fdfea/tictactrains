@@ -263,20 +263,19 @@ static void mcts_check_prediction_cond(tMcts *pMcts)
         if (pMcts->Predict)
         {
 #ifdef DEBUG
-            printf("Prediction ON\n");
+            printf("Prediction OFF\n");
 #endif
             pMcts->Predict = false;
         }
     }
-    else if (NOT pMcts->Predict 
-        AND pMcts->Config.PredictionPolicy == PREDICTION_POLICY_LONGPATHS)
+    else if (NOT pMcts->Predict AND pMcts->Config.PredictionPolicy == PREDICTION_POLICY_LONGPATHS)
     {
         tSize LongestPath = board_longest_path(&pMcts->pRoot->State);
 
         if (LongestPath >= PREDICTION_PATH_LENGTH)
         {
 #ifdef DEBUG
-            printf("Prediction OFF\n");
+            printf("Prediction ON\n");
 #endif
             pMcts->Predict = true;
         }

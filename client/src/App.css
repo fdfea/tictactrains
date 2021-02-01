@@ -130,6 +130,10 @@ body {
     width: auto;
 }
 
+.score span {
+    color: #448B00;
+}
+
 .about {
     text-align: left;
     padding: 20px 30% 20px 30px;

@@ -85,7 +85,7 @@ export class ComputerGame extends React.Component {
             }
             const newState = this.state;
             if (Boolean(Engine._ttt_is_finished(this.state.pGame))) {
-                newState.score = "Score: " + Engine._ttt_get_score(this.state.pGame);
+                newState.score = Engine._ttt_get_score(this.state.pGame);
                 Engine._ttt_free(this.state.pGame);
                 Engine._free(this.state.pGame);
                 newState.pGame = null;
@@ -95,7 +95,9 @@ export class ComputerGame extends React.Component {
     }
 
     render = () => {
-        const score = (this.state.score) ? <p>{this.state.score}</p> : null;
+        const score = (this.state.score) 
+            ? <p className="score">Score: <span>{this.state.score}</span></p> 
+            : null;
         return (
             <div className="game">
                 {score}

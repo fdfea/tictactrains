@@ -30,14 +30,16 @@ export class LocalGame extends React.Component {
         if (this.state.game.makeMove(index, this.state.game.getPlayer())) {
             const newState = this.state;
             if (this.state.game.isFinished()) {
-                newState.score = "Score: " + this.state.game.score();
+                newState.score = this.state.game.score();
             }
             this.setState(newState);
         }
     }
 
     render = () => {
-        const score = (this.state.score) ? <p>{this.state.score}</p> : null;
+        const score = (this.state.score) 
+            ? <p className="score">Score: <span>{this.state.score}</span></p> 
+            : null;
         return (
             <div className="game">
                 {score}
