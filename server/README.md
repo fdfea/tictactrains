@@ -2,7 +2,7 @@
 
 ### **Summary**
 
-An Express server to serve the [client](https://github.com/fdfea/tictactrains/tree/master/client) application and to matchmake and manage the game state between players. 
+An Express server to serve the [client](../client/) application and to matchmake and manage the game state between players. 
 
 ### **Usage**
 
