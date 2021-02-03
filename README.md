@@ -15,13 +15,13 @@ Try out the game [here](https://tictactrains.herokuapp.com/)!
 
 ### **Modules**
 
-There are three modules that make up the application:  
+There are five modules that make up the application:  
 
 * [Client](client/) – A React front-end which allows the user to interact with the board and configure game settings. 
 * [Engine](engine/) – An implementation of the game rules and the AI opponent in C. 
 * [Server](server/) – An Express/Colyseus server to matchmake and manage games between online opponents. 
-* [Original](original/) – The original implementation of the game in Java and data generation for the models. 
 * [Models](models/) – The Python models to predict the outcome of simulated games for the AI. 
+* [Original](original/) – The original implementation of the game in Java and data generation for the models. 
 
 ### **Tech Stack**
 
