@@ -1,15 +1,19 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <errno.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include "rules.h"
 #include "bitutil.h"
-#include "random.h"
-#include "util.h"
-#ifdef DEBUG
 #include "debug.h"
-#endif
+#include "defs.h"
+#include "random.h"
+#include "rules.h"
+#include "types.h"
+#include "util.h"
+
+#define RULES_PLAYER_MASK   0x8000000000000000ULL
 
 static void rules_by_type(tRules *pRules, eRulesType RulesType);
 static void rules_random_move(tRules *pRules, tBoard *pBoard, tRandom* pRand);
@@ -20,7 +24,7 @@ void rules_init(tRules *pRules, tRulesConfig *pConfig)
     rules_by_type(pRules, pConfig->RulesType);
 }
 
-void rules_cfg_init(tRulesConfig *pConfig)
+void rules_config_init(tRulesConfig *pConfig)
 {
     pConfig->RulesType = RULES_CLASSICAL;
 }
@@ -32,9 +36,7 @@ uint64_t rules_policy(tRules *pRules, tBoard *pBoard)
     if (board_finished(pBoard))
     {
         Res = -EINVAL;
-#ifdef DEBUG
-        dbg_printf("ERROR: Game finshed\n");
-#endif
+        dbg_printf(DEBUG_ERROR, "Game is finshed\n");
         goto Error;
     }
 
@@ -91,9 +93,7 @@ char *rules_moves_string(tRules *pRules, int *pMoves, int Size)
     pStr = malloc(sizeof(char)*RULES_MOVES_STR_LEN);
     if (pStr IS NULL)
     {
-#ifdef DEBUG
-        dbg_printf("ERROR: No memory available\n");
-#endif
+        dbg_printf(DEBUG_ERROR, "No memory available\n");
         goto Error;
     }
 
@@ -158,9 +158,7 @@ static bool rules_index_player(tRules *pRules, tIndex Index)
 
     if (NOT board_index_valid(Index))
     {
-#ifdef DEBUG
-        dbg_printf("WARN: Invalid index\n");
-#endif
+        dbg_printf(DEBUG_WARN, "Invalid index\n");
         goto Error;
     }
 
@@ -172,8 +170,8 @@ Error:
 
 static void rules_by_type(tRules *pRules, eRulesType RulesType)
 {
-    eMovePolicy MovePolicies[BOARD_ROWS*BOARD_COLUMNS];
-    size_t PoliciesSize = BOARD_ROWS*BOARD_COLUMNS*sizeof(eMovePolicy);
+    eMovePolicy MovePolicies[ROWS*COLUMNS];
+    size_t PoliciesSize = ROWS*COLUMNS*sizeof(eMovePolicy);
 
     switch (RulesType)
     {
@@ -194,9 +192,7 @@ static void rules_by_type(tRules *pRules, eRulesType RulesType)
         }
         default: 
         {
-#ifdef DEBUG
-            dbg_printf("ERROR: Invalid rules type, using default\n");
-#endif
+            dbg_printf(DEBUG_WARN, "Invalid rules type\n");
             memcpy(&MovePolicies, &RulesClassical, PoliciesSize);
             break;
         }

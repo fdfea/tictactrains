@@ -1,10 +1,12 @@
 #ifndef __MCTNLIST_H__
 #define __MCTNLIST_H__
 
+#include <stdbool.h>
 #include <stdint.h>
 
-#include "vector.h"
 #include "random.h"
+#include "types.h"
+#include "vector.h"
 
 #define MCTN_LIST_MAX_SIZE  UINT8_MAX
 

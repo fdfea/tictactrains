@@ -1,25 +1,45 @@
+#include <stdbool.h>
+#include <math.h>
 #include <stdint.h>
 #include <string.h>
-#include <math.h>
 
-#include "board_pred.h"
 #include "bitutil.h"
-#include "util.h"
-#ifdef DEBUG
+#include "board.h"
+#include "board_pred.h"
 #include "debug.h"
-#endif
+#include "defs.h"
+#include "types.h"
+#include "util.h"
+
+#define BOARD_NEIGHBORS     4
+#define BOARD_SHAPES        33
+
+#define BOARD_PRED_DRAW_MARGIN      0.4f
+#define BOARD_SHP_MLP_SCORE_SCALER  24
+
+#define BOARD_SHP_MLP_NEURONS   20
+#define BOARD_SHP_LOOKUP_SIZE   512
+
+#define BOARD_WIN   1.0f
+#define BOARD_DRAW  0.5f
+#define BOARD_LOSS  0.0f
+
+#define BOARD_WIN_BASE      0.90f
+#define BOARD_WIN_BONUS     0.025f
+#define BOARD_LOSS_BASE     0.10f
+#define BOARD_LOSS_PENALTY  0.025f
 
 typedef struct BoardNbrArea
 {
     tSize N[BOARD_NEIGHBORS];
-
-} tBoardNbrArea;
+}
+tBoardNbrArea;
 
 typedef struct BoardShpArea
 {
     tSize S[BOARD_SHAPES];
-
-} tBoardShpArea;
+}
+tBoardShpArea;
 
 static const float NbrLinRegCoeffs[BOARD_NEIGHBORS];
 static const float NbrLinRegIntercept = 3.0730f;
@@ -54,13 +74,12 @@ static float ReLU(float X);
 
 float board_predict_score(tBoard *pBoard, ePredictionStrategy Strategy)
 {
-#ifdef DEBUG
+    float Res = 0.0f;
+
     if (NOT board_finished(pBoard))
     {
-        dbg_printf("WARN: Game not finished\n");
+        dbg_printf(DEBUG_WARN, "Game not finished\n");
     }
-#endif
-    float Res = 0.0f;
 
     switch (Strategy) 
     {
@@ -79,13 +98,11 @@ float board_predict_score(tBoard *pBoard, ePredictionStrategy Strategy)
             Res = board_predict_shp_mlp(pBoard);
             break;
         }
-#ifdef DEBUG
         default:
         {
-            dbg_printf("WARN: Invalid prediction strategy\n");
+            dbg_printf(DEBUG_WARN, "Invalid prediction strategy\n");
             break;
         }
-#endif
     }
 
     return Res;
@@ -98,12 +115,11 @@ static void board_nbra_init(tBoardNbrArea *pArea)
 
 static void board_nbra_inc(tBoardNbrArea *pArea, tBoard *pBoard, tIndex Index) 
 {
-#ifdef DEBUG
     if (board_index_empty(pBoard, Index))
     {
-        dbg_printf("WARN: Index empty\n");
+        dbg_printf(DEBUG_WARN, "Index empty\n");
     }
-#endif
+
     bool Player = board_index_player(pBoard, Index);
     tSize Rank = (board_index_left_valid(Index) 
             AND board_index_player(pBoard, board_index_left(Index)) == Player)
@@ -119,12 +135,11 @@ static void board_nbra_inc(tBoardNbrArea *pArea, tBoard *pBoard, tIndex Index)
 
 static void board_nbra_gen(tBoardNbrArea *pArea, tBoard *pBoard, tIndex Index, uint64_t *pChecked) 
 {
-#ifdef DEBUG
     if (board_index_empty(pBoard, Index))
     {
-        dbg_printf("WARN: Index empty\n");
+        dbg_printf(DEBUG_WARN, "Index empty\n");
     }
-#endif
+
     bool Player = board_index_player(pBoard, Index);
     BitSet64(pChecked, Index);
     board_nbra_inc(pArea, pBoard, Index);
@@ -166,12 +181,11 @@ static void board_shpa_init(tBoardShpArea *pArea)
 
 static void board_shpa_inc(tBoardShpArea *pArea, tBoard *pBoard, tIndex Index)
 {
-#ifdef DEBUG
     if (board_index_empty(pBoard, Index))
     {
-        dbg_printf("WARN: Index empty\n");
+        dbg_printf(DEBUG_WARN, "Index empty\n");
     }
-#endif
+
     bool Piece = board_index_player(pBoard, Index),
         LeftValid = board_index_left_valid(Index), 
         RightValid = board_index_right_valid(Index), 
@@ -199,22 +213,19 @@ static void board_shpa_inc(tBoardShpArea *pArea, tBoard *pBoard, tIndex Index)
     {
         pArea->S[Type]++;
     }
-#ifdef DEBUG
     else
     {
-        dbg_printf("WARN: Unknown shape type");
+        dbg_printf(DEBUG_WARN, "Unknown shape type\n");
     }
-#endif
 }
 
 static void board_shpa_gen(tBoardShpArea *pArea, tBoard *pBoard, tIndex Index, uint64_t *pChecked)
 {
-#ifdef DEBUG
     if (board_index_empty(pBoard, Index))
     {
-        dbg_printf("WARN: Index empty\n");
+        dbg_printf(DEBUG_WARN, "Index empty\n");
     }
-#endif
+
     bool Player = board_index_player(pBoard, Index);
     BitSet64(pChecked, Index);
     board_shpa_inc(pArea, pBoard, Index);
@@ -255,7 +266,7 @@ static float board_predict_nbr_linreg(tBoard *pBoard)
     tBoardNbrArea Area;
     uint64_t Checked = 0ULL;
 
-    for (tIndex i = 0; i < BOARD_ROWS*BOARD_COLUMNS; ++i) 
+    for (tIndex i = 0; i < ROWS*COLUMNS; ++i) 
     {
         if (NOT board_index_empty(pBoard, i) AND NOT BitTest64(Checked, i)) 
         {
@@ -303,7 +314,7 @@ static float board_predict_nbr_logreg(tBoard *pBoard)
     board_nbra_init(&AreaX);
     board_nbra_init(&AreaO);
 
-    for (tIndex i = 0; i < BOARD_ROWS*BOARD_COLUMNS; ++i) 
+    for (tIndex i = 0; i < ROWS*COLUMNS; ++i) 
     {
         if (NOT board_index_empty(pBoard, i) AND NOT BitTest64(Checked, i)) 
         {
@@ -333,7 +344,7 @@ static float board_predict_shp_mlp(tBoard *pBoard)
     tBoardShpArea Area;
     uint64_t Checked = 0ULL;
 
-    for (tIndex i = 0; i < BOARD_ROWS*BOARD_COLUMNS; ++i) 
+    for (tIndex i = 0; i < ROWS*COLUMNS; ++i) 
     {
         if (NOT board_index_empty(pBoard, i) AND NOT BitTest64(Checked, i)) 
         {

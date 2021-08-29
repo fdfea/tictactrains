@@ -6,10 +6,10 @@
 typedef struct Random
 {
     uint64_t s[2];
-
-} tRandom;
+} 
+tRandom;
 
 void rand_init(tRandom *pRand);
-uint64_t rand_xorshft128(tRandom *pRand);
+uint64_t rand_next(tRandom *pRand);
 
 #endif

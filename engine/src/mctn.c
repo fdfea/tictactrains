@@ -1,16 +1,16 @@
+#include <float.h>
+#include <math.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <math.h>
-#include <float.h>
 
+#include "board.h"
+#include "debug.h"
 #include "mctn.h"
 #include "util.h"
-#ifdef DEBUG
-#include "debug.h"
-#endif
 
 static uint32_t mctn_size(tMctn *pNode);
-static float UCT(tVisits TotalVisits, tVisits NodeVisits, float NodeScore);
+static float UCT(tVisits ParentVisits, tVisits NodeVisits, float NodeScore);
 
 void mctn_init(tMctn *pNode, tBoard *pBoard)
 {
@@ -51,7 +51,7 @@ bool mctn_equals(tMctn *pNode, tMctn *pN)
 
 tMctn *mctn_random_child(tMctn *pNode, tRandom *pRand)
 {
-    tIndex RandIndex = rand_xorshft128(pRand) % mctn_list_size(&pNode->Children);
+    tIndex RandIndex = rand_next(pRand) % mctn_list_size(&pNode->Children);
     return mctn_list_get(&pNode->Children, RandIndex);
 }
 
@@ -94,9 +94,7 @@ char *mctn_string(tMctn *pNode)
     pStr = malloc(sizeof(char)*MCTN_STR_LEN);
     if (pStr IS NULL)
     {
-#ifdef DEBUG
-        dbg_printf("ERROR: No memory available\n");
-#endif
+        dbg_printf(DEBUG_ERROR, "No memory available\n");
         goto Error;
     }
 
@@ -104,7 +102,8 @@ char *mctn_string(tMctn *pNode)
 
     tVisits Visits = pNode->Visits;
 
-    pStr += sprintf(pStr, "Tree size: %d, Root visits: %d\n", mctn_size(pNode), Visits);
+    pStr += sprintf(pStr, "Tree size: %d, Root score: %.2f/%d\n", 
+        mctn_size(pNode), pNode->Score, Visits);
 
     for (tIndex i = 0; i < mctn_list_size(&pNode->Children); ++i)
     {
@@ -112,8 +111,10 @@ char *mctn_string(tMctn *pNode)
         tMctn *pChild = mctn_list_get(&pNode->Children, i);
         pId = board_index_id(board_last_move_index(&pChild->State));
 
-        pStr += sprintf(pStr, "%s: %.2f/%d ** %d Nodes ** %3.3e UCT\n", 
-            pId, pChild->Score, pChild->Visits, mctn_size(pChild),
+        float Eval = pChild->Visits > 0 ? pChild->Score/pChild->Visits : 0.0f;
+        
+        pStr += sprintf(pStr, "%s: %0.2f @ %.2f/%d ** %d Nodes ** %3.3e UCT\n", 
+            pId, Eval, pChild->Score, pChild->Visits, mctn_size(pChild), 
             UCT(Visits, pChild->Visits, pChild->Score));
 
         free(pId);
@@ -138,9 +139,9 @@ static uint32_t mctn_size(tMctn *pNode)
     return Size;
 }
 
-static float UCT(tVisits TotalVisits, tVisits NodeVisits, float NodeScore)
+static float UCT(tVisits ParentVisits, tVisits NodeVisits, float NodeScore)
 {
     return (NodeVisits == 0) 
         ? FLT_MAX 
-        : (NodeScore/NodeVisits) + sqrtf(2*logf(TotalVisits)/NodeVisits);
+        : (NodeScore/NodeVisits) + sqrtf(2*logf(ParentVisits)/NodeVisits);
 }

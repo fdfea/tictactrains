@@ -1,45 +1,28 @@
 #ifndef __BOARD_H__
 #define __BOARD_H__
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "bitutil.h"
-
-#define BOARD_ROWS      7
-#define BOARD_COLUMNS   7
+#include "types.h"
 
 #define BOARD_ID_STR_LEN    3
 #define BOARD_STR_LEN       190
-
-#define BOARD_MASK              0x0001FFFFFFFFFFFFULL
-#define BOARD_LAST_MOVE_INDEX   58
-#define BOARD_MIN_ADJ_SQS       5
-
-#define BOARD_WIN   1.0f
-#define BOARD_DRAW  0.5f
-#define BOARD_LOSS  0.0f
-
-#define BOARD_WIN_BASE      0.90f
-#define BOARD_WIN_BONUS     0.025f
-#define BOARD_LOSS_BASE     0.10f
-#define BOARD_LOSS_PENALTY  0.025f
-
-typedef int_fast8_t tScore;
 
 typedef struct Board
 {
     uint64_t Data;
     uint64_t Valid;
-
-} tBoard;
+}
+tBoard;
 
 typedef enum ScoringAlgorithm
 {
     SCORING_ALGORITHM_OPTIMAL   = 1,
     SCORING_ALGORITHM_QUICK     = 2,
-
-} eScoringAlgorithm;
+}
+eScoringAlgorithm;
 
 void board_init(tBoard *pBoard);
 void board_copy(tBoard *pDest, tBoard *pSrc);

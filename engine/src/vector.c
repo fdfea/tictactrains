@@ -1,11 +1,10 @@
-#include <stdlib.h>
 #include <errno.h>
+#include <stdlib.h>
 
-#include "vector.h"
-#include "util.h"
-#ifdef DEBUG
 #include "debug.h"
-#endif
+#include "types.h"
+#include "util.h"
+#include "vector.h"
 
 int vector_init(tVector *pVector)
 {
@@ -15,9 +14,7 @@ int vector_init(tVector *pVector)
     if (pVector->ppItems IS NULL)
     {
         Res = -ENOMEM;
-#ifdef DEBUG
-        dbg_printf("ERROR: No memory available\n");
-#endif
+        dbg_printf(DEBUG_ERROR, "No memory available\n");
         goto Error;
     }
 
@@ -29,7 +26,7 @@ Error:
 
 void vector_free(tVector *pVector)
 {
-    if (pVector->ppItems IS_NOT NULL)
+    if (pVector->ppItems ISNOT NULL)
     {
         free(pVector->ppItems);
         pVector->ppItems = NULL;
@@ -57,12 +54,10 @@ bool vector_add(tVector *pVector, void *pItem)
         pVector->ppItems[pVector->Size++] = pItem;
         Added = true;
     }
-#ifdef DEBUG
     else
     {
-        dbg_printf("WARN: Vector reached max capacity\n");
+        dbg_printf(DEBUG_WARN, "Vector reached max capacity\n");
     }
-#endif
 
     return Added;
 }
@@ -75,12 +70,10 @@ void *vector_get(tVector *pVector, tIndex Index)
     {
         pTmp = pVector->ppItems[Index];
     }
-#ifdef DEBUG
     else
     {
-        dbg_printf("WARN: Vector index out of bounds\n");
+        dbg_printf(DEBUG_WARN, "Vector index out of bounds\n");
     }
-#endif
 
     return pTmp;
 }
@@ -94,12 +87,10 @@ void *vector_set(tVector *pVector, tIndex Index, void *pItem)
         pTmp = pVector->ppItems[Index];
         pVector->ppItems[Index] = pItem;
     }
-#ifdef DEBUG
     else
     {
-        dbg_printf("WARN: Vector index out of bounds\n");
+        dbg_printf(DEBUG_WARN, "Vector index out of bounds\n");
     }
-#endif
 
     return pTmp;
 }
@@ -118,12 +109,10 @@ void *vector_delete(tVector *pVector, tIndex Index)
         }
         pVector->ppItems[--pVector->Size] = NULL;
     }
-#ifdef DEBUG
     else
     {
-        dbg_printf("WARN: Vector index out of bounds\n");
+        dbg_printf(DEBUG_WARN, "Vector index out of bounds\n");
     }
-#endif
 
     return pTmp;
 }
@@ -135,7 +124,7 @@ void vector_shuffle(tVector *pVector, tRandom *pRand)
 
     for (i = pVector->Size - 1; i > 0; --i) 
     {
-        j = rand_xorshft128(pRand) % (i + 1);
+        j = rand_next(pRand) % (i + 1);
         pTmp = vector_set(pVector, i, vector_get(pVector, j));
         (void) vector_set(pVector, j, pTmp);
     }

@@ -1,13 +1,12 @@
 #ifndef __RULES_H__
 #define __RULES_H__
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "board.h"
+#include "defs.h"
 #include "vector.h"
-
-#define RULES_PLAYER_MASK   0x8000000000000000ULL
 
 #define RULES_MOVES_STR_LEN     512
 
@@ -16,10 +15,10 @@ typedef enum RulesType
     RULES_CLASSICAL     = 1,
     RULES_MODERN        = 2,
     RULES_EXPERIMENTAL  = 3,
+} 
+eRulesType;
 
-} eRulesType;
-
-typedef enum MovePolicy
+typedef enum __attribute__ ((aligned(8))) MovePolicy
 {
     X_ALL       = 0x8001FFFFFFFFFFFFULL, 
     X_RING1     = 0x8001FFFFFEFFFFFFULL, 
@@ -41,23 +40,24 @@ typedef enum MovePolicy
     O_RING2_C   = 0x0001FFFE3D78FFFFULL, 
     O_RING3     = 0x0001FE0C183060FFULL,
     O_RING3_C   = 0x0001FE0C193060FFULL,  
-
-} __attribute__ ((aligned(8))) eMovePolicy;
+}
+eMovePolicy;
+//__attribute__ ((aligned(8))) eMovePolicy;
 
 typedef struct Rules
 {
-    eMovePolicy MovePolicies[BOARD_ROWS*BOARD_COLUMNS];
-
-} tRules;
+    eMovePolicy MovePolicies[ROWS*COLUMNS];
+}
+tRules;
 
 typedef struct RulesConfig
 {
     eRulesType RulesType;
-
-} tRulesConfig;
+}
+tRulesConfig;
 
 void rules_init(tRules *pRules, tRulesConfig *pConfig);
-void rules_cfg_init(tRulesConfig *pConfig);
+void rules_config_init(tRulesConfig *pConfig);
 uint64_t rules_policy(tRules *pRules, tBoard *pBoard);
 bool rules_player(tRules *pRules, tBoard *pBoard);
 bool rules_prev_player(tRules *pRules, tBoard *pState);
@@ -65,7 +65,7 @@ void rules_simulate_playout(tRules *pRules, tBoard *pBoard, tRandom *pRand);
 void rules_next_states(tRules *pRules, tBoard *pBoard, tVector *pVector);
 char *rules_moves_string(tRules *pRules, int *pMoves, int Size);
 
-static const eMovePolicy RulesClassical[BOARD_ROWS*BOARD_COLUMNS] = 
+static const eMovePolicy RulesClassical[ROWS*COLUMNS] = 
 {
     X_ALL, O_ALL, X_ALL, O_ALL, X_ALL, O_ALL, X_ALL,
     O_ALL, X_ALL, O_ALL, X_ALL, O_ALL, X_ALL, O_ALL,
@@ -76,7 +76,7 @@ static const eMovePolicy RulesClassical[BOARD_ROWS*BOARD_COLUMNS] =
     X_ALL, O_ALL, X_ALL, O_ALL, X_ALL, O_ALL, X_ALL,
 };
 
-static const eMovePolicy RulesModern[BOARD_ROWS*BOARD_COLUMNS] = 
+static const eMovePolicy RulesModern[ROWS*COLUMNS] = 
 {
     X_ALL, O_RING1_I, O_RING3, X_ALL, O_ALL, X_ALL, O_ALL,
     X_ALL, O_ALL, X_ALL, O_ALL, X_ALL, O_ALL, X_ALL,
@@ -87,7 +87,7 @@ static const eMovePolicy RulesModern[BOARD_ROWS*BOARD_COLUMNS] =
     O_ALL, X_ALL, O_ALL, X_ALL, O_ALL, X_ALL, O_ALL,
 };
 
-static const eMovePolicy RulesExperimental[BOARD_ROWS*BOARD_COLUMNS] = 
+static const eMovePolicy RulesExperimental[ROWS*COLUMNS] = 
 {
     X_ALL, O_RING2, O_RING3, X_ALL, O_ALL, X_ALL, O_ALL,
     X_ALL, O_ALL, X_ALL, O_ALL, X_ALL, O_ALL, X_ALL,

@@ -1,11 +1,12 @@
 #ifndef __VECTOR_H__
 #define __VECTOR_H__
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "bitutil.h"
 #include "random.h"
+#include "types.h"
 
 #define VECTOR_MAX_SIZE     UINT8_MAX
 
@@ -13,8 +14,8 @@ typedef struct Vector
 {
     void **ppItems;
     tSize Size;
-
-} tVector;
+} 
+tVector;
 
 int vector_init(tVector *pVector);
 void vector_free(tVector *pVector);

@@ -1,14 +1,13 @@
+#include <stdint.h>
 #include <stdlib.h>
 #include <time.h>
 
-#include "random.h"
-#ifdef DEBUG
 #include "debug.h"
-#endif
+#include "random.h"
 
 void rand_init(tRandom *pRand)
 {
-#ifdef DEBUG
+#if defined (DEBUG_DEV) || defined (DEBUG)
     srand(DEBUG_RANDOM_SEED);
 #else
     srand(time(NULL));
@@ -17,7 +16,7 @@ void rand_init(tRandom *pRand)
     pRand->s[1] = (uint64_t) rand() + 1;
 }
 
-uint64_t rand_xorshft128(tRandom *pRand)
+uint64_t rand_next(tRandom *pRand)
 {
     uint64_t s1 = pRand->s[0];
     uint64_t s0 = pRand->s[1];

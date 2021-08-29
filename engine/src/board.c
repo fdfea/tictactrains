@@ -1,14 +1,28 @@
-#include <stdlib.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <math.h>
 
-#include "board.h"
 #include "bitutil.h"
-#include "util.h"
-#ifdef DEBUG
+#include "board.h"
 #include "debug.h"
-#endif
+#include "defs.h"
+#include "types.h"
+#include "util.h"
+
+#define BOARD_MASK              0x0001FFFFFFFFFFFFULL
+#define BOARD_LAST_MOVE_INDEX   58
+#define BOARD_MIN_ADJ_SQS       5
+
+#define BOARD_WIN   1.0f
+#define BOARD_DRAW  0.5f
+#define BOARD_LOSS  0.0f
+
+#define BOARD_WIN_BASE      0.90f
+#define BOARD_WIN_BONUS     0.025f
+#define BOARD_LOSS_BASE     0.10f
+#define BOARD_LOSS_PENALTY  0.025f
 
 static tScore board_optimal_score(tBoard *pBoard);
 static tScore board_quick_score(tBoard *pBoard);
@@ -36,12 +50,11 @@ bool board_equals(tBoard *pBoard, tBoard *pB)
 
 void board_make_move(tBoard *pBoard, tIndex Index, bool Player)
 {
-#ifdef DEBUG
     if (NOT board_index_empty(pBoard, Index))
     {
-        dbg_printf("ERROR: Making invalid move\n");
+        dbg_printf(DEBUG_ERROR, "Making invalid move\n");
     }
-#endif
+
     if (Player) 
     {
         BitSet64(&pBoard->Data, Index);
@@ -54,7 +67,7 @@ void board_make_move(tBoard *pBoard, tIndex Index, bool Player)
 
 bool board_finished(tBoard *pBoard)
 {
-    return board_move(pBoard) >= BOARD_ROWS*BOARD_COLUMNS;
+    return board_move(pBoard) >= ROWS*COLUMNS;
 }
 
 tSize board_move(tBoard *pBoard)
@@ -100,7 +113,7 @@ uint64_t board_valid_indices(tBoard *pBoard, uint64_t Policy, bool Adj)
 
 tScore board_score(tBoard *pBoard, eScoringAlgorithm Algorithm)
 {
-    tScore Score;
+    tScore Score = 0;
 
     switch (Algorithm)
     {
@@ -116,10 +129,7 @@ tScore board_score(tBoard *pBoard, eScoringAlgorithm Algorithm)
         }
         default:
         {
-#ifdef DEBUG
-            dbg_printf("WARN: Invalid scoring algorithm\n");
-#endif
-            Score = 0;
+            dbg_printf(DEBUG_WARN, "Invalid scoring algorithm\n");
             break;
         }
     }
@@ -131,7 +141,7 @@ static tScore board_optimal_score(tBoard *pBoard)
 {
     tScore ScoreSq, ScoreX = 0, ScoreO = 0;
 
-    for (tIndex i = 0; i < BOARD_ROWS*BOARD_COLUMNS; ++i) 
+    for (tIndex i = 0; i < ROWS*COLUMNS; ++i) 
     {
         if (NOT board_index_empty(pBoard, i)) 
         {
@@ -157,7 +167,7 @@ static tScore board_quick_score(tBoard *pBoard)
     tScore ScoreSq, ScoreX = 0, ScoreO = 0;
     uint64_t Checked = 0ULL;
 
-    for (tIndex i = 0; i < BOARD_ROWS*BOARD_COLUMNS; ++i) 
+    for (tIndex i = 0; i < ROWS*COLUMNS; ++i) 
     {
         if (NOT board_index_empty(pBoard, i) AND NOT BitTest64(Checked, i)) 
         {
@@ -206,7 +216,7 @@ tSize board_longest_path(tBoard *pBoard)
 {
     tSize LenSq, LongestPath = 0;
 
-    for (tIndex i = 0; i < BOARD_ROWS*BOARD_COLUMNS; ++i) 
+    for (tIndex i = 0; i < ROWS*COLUMNS; ++i) 
     {
         if (NOT board_index_empty(pBoard, i)) 
         {
@@ -228,39 +238,36 @@ char board_index_char(tBoard *pBoard, tIndex Index)
 
 tIndex board_id_index(char (*pId)[BOARD_ID_STR_LEN])
 {
-    return BOARD_ROWS*(BOARD_ROWS-((*pId)[1]-'0'))+((*pId)[0]-'a');
+    return ROWS*(ROWS-((*pId)[1]-'0'))+((*pId)[0]-'a');
 }
 
 bool board_id_valid(char (*pId)[BOARD_ID_STR_LEN])
 {
     return (
-        (*pId)[0] >= 'a' 
-        AND (*pId)[0] < 'a'+BOARD_ROWS 
-        AND (*pId)[1]-'0' > 0 
-        AND (*pId)[1]-'0' <= BOARD_ROWS 
+        (*pId)[0] >= 'a'
+        AND (*pId)[0] < 'a' + ROWS
+        AND (*pId)[1]-'0' > 0
+        AND (*pId)[1]-'0' <= ROWS
     );
 }
 
 char *board_index_id(tIndex Index)
 {
-#ifdef DEBUG
+    char *pId = NULL;
+
     if (NOT board_index_valid(Index))
     {
-        dbg_printf("WARN: Invalid index\n");
+        dbg_printf(DEBUG_WARN, "Invalid index\n");
     }
-#endif
-    char *pId = NULL;
 
     pId = malloc(sizeof(char)*BOARD_ID_STR_LEN);
     if (pId IS NULL)
     {
-#ifdef DEBUG
-        dbg_printf("ERROR: No memory available\n");
-#endif
+        dbg_printf(DEBUG_ERROR, "No memory available\n");
         goto Error;
     }
 
-    sprintf(pId, "%c%c", (Index%BOARD_ROWS)+'a', (BOARD_ROWS-(Index/BOARD_ROWS))+'0');
+    sprintf(pId, "%c%c", (Index%ROWS)+'a', (ROWS-(Index/ROWS))+'0');
 
 Error:
     return pId;
@@ -273,28 +280,26 @@ char *board_string(tBoard *pBoard)
     pStr = malloc(sizeof(char)*BOARD_STR_LEN);
     if (pStr IS NULL)
     {
-#ifdef DEBUG
-        dbg_printf("ERROR: No memory available\n");
-#endif
+        dbg_printf(DEBUG_ERROR, "No memory available\n");
         goto Error;
     }
 
     char *pBegin = pStr;
 
-    for (tIndex i = 0; i < BOARD_ROWS*BOARD_COLUMNS; ++i)
+    for (tIndex i = 0; i < ROWS*COLUMNS; ++i)
     {
-        if (i % BOARD_ROWS == 0)
+        if (i % ROWS == 0)
         {
-            pStr += sprintf(pStr, "%d ", BOARD_ROWS-i/BOARD_ROWS);
+            pStr += sprintf(pStr, "%d ", ROWS-i/ROWS);
         }
 
-        pStr += sprintf(pStr, ((i+1) % BOARD_COLUMNS == 0) 
+        pStr += sprintf(pStr, ((i+1) % COLUMNS == 0) 
             ? "[%c]\n" : "[%c]", board_index_char(pBoard, i));
     }
 
     pStr += sprintf(pStr, "& ");
 
-    for (tIndex col = 0; col < BOARD_COLUMNS; ++col)
+    for (tIndex col = 0; col < COLUMNS; ++col)
     {
         pStr += sprintf(pStr, " %c ", 'a'+col);
     }
@@ -307,12 +312,11 @@ Error:
 
 static bool board_adj_index_not_empty(tBoard *pBoard, tIndex Index)
 {
-#ifdef DEBUG
     if (NOT board_index_valid(Index))
     {
-        dbg_printf("WARN: Invalid index\n");
+        dbg_printf(DEBUG_WARN, "Invalid index\n");
     }
-#endif
+
     return (
         (board_index_left_valid(Index) 
             AND NOT board_index_empty(pBoard, board_index_left(Index))) 
@@ -427,49 +431,47 @@ static tSize board_index_checked_path(tBoard *pBoard, tIndex Index, uint64_t Chk
 
 bool board_index_valid(tIndex Index)
 {
-    return Index >= 0 AND Index < BOARD_ROWS*BOARD_COLUMNS;
+    return Index >= 0 AND Index < ROWS*COLUMNS;
 }
 
 bool board_index_empty(tBoard *pBoard, tIndex Index)
 {
-#ifdef DEBUG
     if (NOT board_index_valid(Index))
     {
-        dbg_printf("WARN: Invalid index\n");
+        dbg_printf(DEBUG_WARN, "Invalid index\n");
     }
-#endif
+
     return NOT BitTest64(pBoard->Valid, Index);
 }
 
 bool board_index_player(tBoard *pBoard, tIndex Index)
 {
-#ifdef DEBUG
     if (board_index_empty(pBoard, Index))
     {
-        dbg_printf("WARN: Index empty\n");
+        dbg_printf(DEBUG_WARN, "Index empty\n");
     }
-#endif
+
     return BitTest64(pBoard->Data, Index);
 }
 
 bool board_index_left_valid(tIndex Index)
 {
-    return Index % BOARD_COLUMNS > 0;
+    return Index % COLUMNS > 0;
 }
 
 bool board_index_right_valid(tIndex Index)
 {
-    return Index % BOARD_COLUMNS < BOARD_COLUMNS-1;
+    return Index % COLUMNS < COLUMNS-1;
 }
 
 bool board_index_top_valid(tIndex Index)
 {
-    return Index >= BOARD_COLUMNS;
+    return Index >= COLUMNS;
 }
 
 bool board_index_bottom_valid(tIndex Index)
 {
-    return Index < BOARD_ROWS*(BOARD_COLUMNS-1);
+    return Index < ROWS*(COLUMNS-1);
 }
 
 tIndex board_index_left(tIndex Index)
@@ -484,12 +486,12 @@ tIndex board_index_right(tIndex Index)
 
 tIndex board_index_top(tIndex Index)
 {
-    return Index-BOARD_COLUMNS;
+    return Index-COLUMNS;
 }
 
 tIndex board_index_bottom(tIndex Index)
 {
-    return Index+BOARD_COLUMNS;
+    return Index+COLUMNS;
 }
 
 static tSize max_size(tSize A, tSize B)

@@ -1,13 +1,11 @@
 #ifndef __BITUTIL_H__
 #define __BITUTIL_H__
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "random.h"
-
-typedef uint_fast8_t tIndex;
-typedef uint_fast8_t tSize;
+#include "types.h"
 
 bool BitTest64(uint64_t Mask, tIndex Index);
 void BitSet64(uint64_t *pMask, tIndex Index);

@@ -1,4 +1,9 @@
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "bitutil.h"
+#include "random.h"
+#include "types.h"
 
 bool BitTest64(uint64_t Mask, tIndex Index)
 {
@@ -54,6 +59,6 @@ tIndex BitKthSetIndex64(uint64_t Mask, uint64_t Rank)
 
 tIndex BitScanRandom64(uint64_t Mask, tRandom *pRand)
 {
-    uint64_t Rank = (rand_xorshft128(pRand) % BitPopCount64(Mask))+1;
+    uint64_t Rank = (rand_next(pRand) % BitPopCount64(Mask))+1;
     return BitKthSetIndex64(Mask, Rank);
 }

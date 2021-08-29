@@ -1,49 +1,50 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <string.h>
 #include <errno.h>
-#include <ctype.h>
+#include <float.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include "ttt.h"
-#include "board_pred.h"
-#include "mctn.h"
 #include "bitutil.h"
-#include "util.h"
-#ifdef DEBUG
+#include "board.h"
+#include "config.h"
 #include "debug.h"
-#endif
+#include "mctn.h"
+#include "mcts.h"
+#include "rules.h"
+#include "ttt.h"
+#include "types.h"
+#include "util.h"
+#include "vector.h"
 
-static void ttt_cfg_load(tTTTConfig *pConfig);
+static int ttt_load_moves(tTTT *pGame, tVector *Moves);
 
 int main(void)
 {
     int Res = 0;
 
     tTTT Game;
-    tTTTConfig Config;
+    tConfig Config;
     
-    ttt_cfg_init(&Config);
-    ttt_cfg_load(&Config);
+    config_init(&Config);
 
-#ifdef DEBUG
-    printf("%s: %d\n", TTT_CONFIG_COMPUTER_PLAYING, Config.ComputerPlaying);
-    printf("%s: %d\n", TTT_CONFIG_COMPUTER_PLAYER, Config.ComputerPlayer);
-    printf("%s: %d\n", TTT_CONFIG_RULES_TYPE, Config.RulesConfig.RulesType);
-    printf("%s: %d\n", TTT_CONFIG_SIMULATIONS, Config.MctsConfig.Simulations);
-    printf("%s: %d\n", TTT_CONFIG_SCORING_ALGORITHM, Config.MctsConfig.ScoringAlgorithm);
-    printf("%s: %d\n", TTT_CONFIG_PREDICTION_POLICY, Config.MctsConfig.PredictionPolicy);
-    printf("%s: %d\n\n", TTT_CONFIG_PREDICTION_STRATEGY, Config.MctsConfig.PredictionStrategy);
-#endif
-
-    bool ComputerPlaying = Config.ComputerPlaying;
-    bool ComputerPlayer = Config.ComputerPlayer;
+    Res = config_load(&Config);
+    if (Res < 0)
+    {
+        goto Error;
+    }
 
     Res = ttt_init(&Game, &Config);
     if (Res < 0)
     {
         goto Error;
     }
+
+    bool ComputerPlaying = Config.ComputerPlaying;
+    bool ComputerPlayer = Config.ComputerPlayer;
+
+    config_free(&Config);
 
     char *pBoardStr = NULL;
     char *pMovesStr = NULL;
@@ -62,9 +63,7 @@ int main(void)
     if (pId IS NULL)
     {
         Res = -ENOMEM;
-#ifdef DEBUG
-        dbg_printf("ERROR: No memory available\n");
-#endif
+        dbg_printf(DEBUG_ERROR, "No memory available\n");
         goto Error;
     }
 
@@ -98,10 +97,13 @@ int main(void)
                     printf("Enter move (Player %d): ", (Player ? 1 : 2));
                 }
 
-                if (fgets(*pId, BOARD_ID_STR_LEN, stdin) IS_NOT NULL)
+                if (fgets(*pId, BOARD_ID_STR_LEN, stdin) ISNOT NULL)
                 {
                     int c; 
                     while ((c = getchar()) != '\n' AND c != EOF);
+                    
+                    //add parsing for special commands
+                    //show simulations or lines, quit, etc.
 
                     if (board_id_valid(pId)) 
                     {
@@ -123,7 +125,11 @@ int main(void)
             printf("BEFORE SHIFT\n%s\n", pMctsStr);
             free(pMctsStr);
             pMctsStr = NULL;
+
+            float Eval = mcts_get_eval(&Game.Mcts);
+            if (Eval > -FLT_MAX) printf("Eval: %.2f\n\n", Eval);
         }
+
 #endif
 
         ttt_give_move(&Game, Index);
@@ -161,7 +167,7 @@ Error:
     return Res;
 }
 
-int ttt_init(tTTT *pGame, tTTTConfig *pConfig)
+int ttt_init(tTTT *pGame, tConfig *pConfig)
 {
     int Res = 0;
 
@@ -175,21 +181,43 @@ int ttt_init(tTTT *pGame, tTTTConfig *pConfig)
         goto Error;
     }
 
+    Res = ttt_load_moves(pGame, &pConfig->StartPosition);
+    if (Res < 0)
+    {
+        goto Error;
+    }
+
 Error:
     return Res;
-}
-
-void ttt_cfg_init(tTTTConfig *pConfig)
-{
-    pConfig->ComputerPlaying = false;
-    pConfig->ComputerPlayer = false;
-    rules_cfg_init(&pConfig->RulesConfig);
-    mcts_cfg_init(&pConfig->MctsConfig);
 }
 
 void ttt_free(tTTT *pGame)
 {
     mcts_free(&pGame->Mcts);
+}
+
+static int ttt_load_moves(tTTT *pGame, tVector *pMoves)
+{
+    int Res = 0;
+
+    tBoard BoardCopy;
+    board_init(&BoardCopy);
+    board_copy(&BoardCopy, &pGame->Board);
+
+    for (tIndex i = 0; i < vector_size(pMoves); ++i)
+    {
+        tIndex Move = *((tIndex *) vector_get(pMoves, i));
+        Res = ttt_give_move(pGame, Move);
+        if (Res < 0)
+        {
+            dbg_printf(DEBUG_ERROR, "Failed to load moves\n");
+            board_copy(&pGame->Board, &BoardCopy);
+            goto Error;
+        }
+    }
+
+Error:
+    return Res;
 }
 
 int ttt_get_ai_move(tTTT *pGame)
@@ -232,9 +260,7 @@ int ttt_give_move(tTTT *pGame, int Index)
         OR NOT BitTest64(Indices, Index))
     {
         Res = -EINVAL;
-#ifdef DEBUG
-        dbg_printf("ERROR: Invalid move attempted\n");
-#endif
+        dbg_printf(DEBUG_ERROR, "Invalid move attempted\n");
         goto Error;
     }
 
@@ -270,9 +296,7 @@ int *ttt_get_moves(tTTT *pGame, int *pSize)
     pMoves = malloc(*pSize*sizeof(int));
     if (pMoves IS NULL)
     {
-#ifdef DEBUG
-        dbg_printf("ERROR: No memory available\n");
-#endif
+        dbg_printf(DEBUG_ERROR, "No memory available\n");
         *pSize = 0;
         goto Error;
     }
@@ -284,190 +308,4 @@ int *ttt_get_moves(tTTT *pGame, int *pSize)
 
 Error:
     return pMoves;
-}
-
-static void ttt_cfg_load(tTTTConfig *pConfig)
-{
-    FILE *pFile;
-    char Buf[TTT_CONFIG_MAXLINE];
-
-    if ((pFile = fopen(TTT_CONFIG_FILENAME, "r")) IS_NOT NULL)
-    {
-        int Line = 0;
-        while (fgets(Buf, TTT_CONFIG_MAXLINE, pFile) IS_NOT NULL)
-        {
-            Line++;
-
-            //remove newline and spaces
-            Buf[strcspn(Buf, "\n")] = '\0';
-
-            char *pS = &Buf[0], *pD = pS;
-            do while (isspace(*pS)) pS++; while ((*pD++ = *pS++));
-
-            //check for empty line or comment
-            if (Buf[0] == '\0' OR strncmp(Buf, "#", 1) == 0)
-            {
-                continue;
-            }
-
-            //handle configuration parameters
-            char *pKey, *pValue = NULL, *pEnd = NULL;
-            pKey = strtok(Buf, "=");
-            pValue = strtok(pValue, "=");
-
-            //convert value to number
-            int Val = strtol(pValue, &pEnd, 10);
-
-            if (pValue == pEnd)
-            {
-                fprintf(stderr, "ERROR: Malformatted data at line %d\n", Line);
-                continue;
-            }
-
-            //compare keys to config params
-            if (strncmp(pKey, TTT_CONFIG_COMPUTER_PLAYING, sizeof(TTT_CONFIG_COMPUTER_PLAYING)) == 0)
-            {
-                if (Val == 1)
-                {
-                    pConfig->ComputerPlaying = true;
-                }
-                else if (Val != 0)
-                {
-                    TTT_CFG_VAL_ERR_PRINT(Val, Line);
-                }
-            }
-            else if (strncmp(pKey, TTT_CONFIG_COMPUTER_PLAYER, sizeof(TTT_CONFIG_COMPUTER_PLAYER)) == 0)
-            {
-                if (Val == 1)
-                {
-                    pConfig->ComputerPlayer = true;
-                }
-                else if (Val != 0)
-                {
-                    TTT_CFG_VAL_ERR_PRINT(Val, Line);
-                }
-            }
-            else if (strncmp(pKey, TTT_CONFIG_RULES_TYPE, sizeof(TTT_CONFIG_RULES_TYPE)) == 0)
-            {
-                switch (Val)
-                {
-                    case RULES_CLASSICAL:
-                    {
-                        pConfig->RulesConfig.RulesType = RULES_CLASSICAL;
-                        break;
-                    }
-                    case RULES_MODERN: 
-                    {
-                        pConfig->RulesConfig.RulesType = RULES_MODERN;
-                        break;
-                    }
-                    case RULES_EXPERIMENTAL: 
-                    {
-                        pConfig->RulesConfig.RulesType = RULES_EXPERIMENTAL;
-                        break;
-                    }
-                    default: 
-                    {
-                        TTT_CFG_VAL_ERR_PRINT(Val, Line);
-                        break;
-                    }
-                }
-            }
-            else if (strncmp(pKey, TTT_CONFIG_SIMULATIONS, sizeof(TTT_CONFIG_SIMULATIONS)) == 0)
-            {
-                if (Val > 0 AND Val <= TVISITS_MAX)
-                {
-                    pConfig->MctsConfig.Simulations = Val;
-                }
-                else 
-                {
-                    TTT_CFG_VAL_ERR_PRINT(Val, Line);
-                }
-            }
-            else if (strncmp(pKey, TTT_CONFIG_SCORING_ALGORITHM, sizeof(TTT_CONFIG_SCORING_ALGORITHM)) == 0)
-            {
-                switch (Val)
-                {
-                    case SCORING_ALGORITHM_OPTIMAL:
-                    {
-                        pConfig->MctsConfig.ScoringAlgorithm = SCORING_ALGORITHM_OPTIMAL;
-                        break;
-                    }
-                    case SCORING_ALGORITHM_QUICK:
-                    {
-                        pConfig->MctsConfig.ScoringAlgorithm = SCORING_ALGORITHM_QUICK;
-                        break;
-                    }
-                    default:
-                    {
-                        TTT_CFG_VAL_ERR_PRINT(Val, Line);
-                        break; 
-                    }
-                }
-            }
-            else if (strncmp(pKey, TTT_CONFIG_PREDICTION_POLICY, sizeof(TTT_CONFIG_PREDICTION_POLICY)) == 0)
-            {
-                switch (Val)
-                {
-                    case PREDICTION_POLICY_NEVER: 
-                    {
-                        pConfig->MctsConfig.PredictionPolicy = PREDICTION_POLICY_NEVER;
-                        break;  
-                    }
-                    case PREDICTION_POLICY_ALWAYS:
-                    {
-                        pConfig->MctsConfig.PredictionPolicy = PREDICTION_POLICY_ALWAYS;
-                        break;
-                    }
-                    case PREDICTION_POLICY_LONGPATHS:
-                    {
-                        pConfig->MctsConfig.PredictionPolicy = PREDICTION_POLICY_LONGPATHS;
-                        break;
-                    }
-                    default: 
-                    {
-                        TTT_CFG_VAL_ERR_PRINT(Val, Line);
-                        break;
-                    }
-                }
-            }
-            else if (strncmp(pKey, TTT_CONFIG_PREDICTION_STRATEGY, sizeof(TTT_CONFIG_PREDICTION_STRATEGY)) == 0)
-            {
-                switch (Val)
-                {
-                    case PREDICTION_STRATEGY_NBR_LINREG:
-                    {
-                        pConfig->MctsConfig.PredictionStrategy = PREDICTION_STRATEGY_NBR_LINREG;
-                        break;  
-                    }
-                    case PREDICTION_STRATEGY_NBR_LOGREG:
-                    {
-                        pConfig->MctsConfig.PredictionStrategy = PREDICTION_STRATEGY_NBR_LOGREG;
-                        break;
-                    }
-                    case PREDICTION_STRATEGY_SHP_MLP:
-                    {
-                        pConfig->MctsConfig.PredictionStrategy = PREDICTION_STRATEGY_SHP_MLP;
-                        break;
-                    }
-                    default:
-                    {
-                        TTT_CFG_VAL_ERR_PRINT(Val, Line);
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                TTT_CFG_KEY_ERR_PRINT(pKey, Line);
-            }
-        }
-
-        fclose(pFile);
-    }
-    else
-    {
-        fprintf(stderr, "ERROR: Could not open file \"%s\"\n", TTT_CONFIG_FILENAME);
-        exit(EXIT_FAILURE);
-    }
 }

@@ -1,12 +1,13 @@
 #ifndef __MCTN_H__
 #define __MCTN_H__
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include "board.h"
-#include "vector.h"
 #include "mctn_list.h"
 #include "random.h"
+#include "vector.h"
 
 #define MCTN_STR_LEN    2048
 
@@ -28,8 +29,8 @@ Mctn
     tMctnList Children;
     tVisits Visits;
     float Score;
-
-} tMctn;
+} 
+tMctn;
 
 void mctn_init(tMctn *pNode, tBoard *pBoard);
 void mctn_free(tMctn *pNode);

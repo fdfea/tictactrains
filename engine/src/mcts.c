@@ -1,17 +1,28 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <errno.h>
+#include <float.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #ifdef TIMED
 #include <time.h>
 #endif
 
-#include "mcts.h"
-#include "mctn_list.h"
-#include "util.h"
-#ifdef DEBUG
+#include "board.h"
+#include "board_pred.h"
 #include "debug.h"
-#endif
+#include "mctn.h"
+#include "mctn_list.h"
+#include "mcts.h"
+#include "rules.h"
+#include "random.h"
+#include "types.h"
+#include "util.h"
+
+#define PREDICTION_PATH_LENGTH  11
+#define PREDICTION_MOVE_CUTOFF  44
 
 static float mcts_simulation(tMcts *pMcts, tMctn *pNode);
 static int mcts_expand_node(tMcts *pMcts, tMctn *pNode);
@@ -30,9 +41,7 @@ int mcts_init(tMcts *pMcts, tRules *pRules, tBoard *pState, tMctsConfig *pConfig
     if (pMcts->pRoot IS NULL)
     {
         Res = -ENOMEM;
-#ifdef DEBUG
-        dbg_printf("ERROR: No memory available\n");
-#endif
+        dbg_printf(DEBUG_ERROR, "No memory available\n");
         goto Error;
     }
 
@@ -55,20 +64,18 @@ int mcts_init(tMcts *pMcts, tRules *pRules, tBoard *pState, tMctsConfig *pConfig
             pMcts->Predict = false;
             break;
         }
-#ifdef DEBUG
         default: 
         {
-            dbg_printf("WARN: Invalid prediction policy\n");
+            dbg_printf(DEBUG_WARN, "Invalid prediction policy\n");
             break;
         }
-#endif
     }
 
 Error: 
     return Res;
 }
 
-void mcts_cfg_init(tMctsConfig *pConfig)
+void mcts_config_init(tMctsConfig *pConfig)
 {
     pConfig->Simulations = 10000;
     pConfig->ScoringAlgorithm = SCORING_ALGORITHM_OPTIMAL;
@@ -117,12 +124,10 @@ tBoard *mcts_get_state(tMcts *pMcts)
         tMctn *pBestChild = mctn_most_visited_child(pMcts->pRoot);
         pBoard = &pBestChild->State;
     }
-#ifdef DEBUG
     else
     {
-        dbg_printf("ERROR: No state available\n");
+        dbg_printf(DEBUG_ERROR, "No state available\n");
     }
-#endif
 
     return pBoard;
 }
@@ -157,6 +162,13 @@ void mcts_give_state(tMcts *pMcts, tBoard *pState)
     {
         pMcts->Player = rules_player(pRules, &pMcts->pRoot->State);
     }
+}
+
+float mcts_get_eval(tMcts *pMcts)
+{
+    if (pMcts->pRoot->Visits <= 0.0f) return -FLT_MAX;
+    float Eval = pMcts->pRoot->Score / (float) pMcts->pRoot->Visits;
+    return (pMcts->Player) ? 1.0f - Eval : Eval;
 }
 
 static float mcts_simulation(tMcts *pMcts, tMctn *pNode)
@@ -262,9 +274,6 @@ static void mcts_check_prediction_cond(tMcts *pMcts)
     {
         if (pMcts->Predict)
         {
-#ifdef DEBUG
-            printf("Prediction OFF\n");
-#endif
             pMcts->Predict = false;
         }
     }
@@ -274,9 +283,6 @@ static void mcts_check_prediction_cond(tMcts *pMcts)
 
         if (LongestPath >= PREDICTION_PATH_LENGTH)
         {
-#ifdef DEBUG
-            printf("Prediction ON\n");
-#endif
             pMcts->Predict = true;
         }
     }

@@ -1,13 +1,13 @@
-#include <stdlib.h>
 #include <errno.h>
+#include <stdbool.h>
+#include <stdlib.h>
 
+#include "board.h"
+#include "debug.h"
 #include "mctn_list.h"
 #include "mctn.h"
-#include "board.h"
+#include "types.h"
 #include "util.h"
-#ifdef DEBUG
-#include "debug.h"
-#endif
 
 void mctn_list_init(tMctnList *pList)
 {
@@ -17,7 +17,7 @@ void mctn_list_init(tMctnList *pList)
 
 void mctn_list_free(tMctnList *pList)
 {
-    if (pList->pItems IS_NOT NULL)
+    if (pList->pItems ISNOT NULL)
     {
         free(pList->pItems);
         pList->pItems = NULL;
@@ -55,9 +55,7 @@ int mctn_list_expand(tMctnList *pList, tVector *pNextStates)
         if (pList->pItems IS NULL AND Size > 0) 
         {
             Res = -ENOMEM;
-#ifdef DEBUG
-            dbg_printf("ERROR: No memory available\n");
-#endif
+            dbg_printf(DEBUG_ERROR, "No memory available\n");
             goto Error;
         }
 
@@ -73,9 +71,8 @@ int mctn_list_expand(tMctnList *pList, tVector *pNextStates)
     else
     {
         Res = -EINVAL;
-#ifdef DEBUG
-        dbg_printf("WARN: List reached max capacity\n");
-#endif
+        dbg_printf(DEBUG_WARN, "List reached max capacity\n");
+        goto Error;
     }
 
 Error:
@@ -99,20 +96,18 @@ int mctn_list_add(tMctnList *pList, tMctn *pNode)
         if (pList->pItems IS NULL) 
         {
             Res = -ENOMEM;
-#ifdef DEBUG
-            dbg_printf("ERROR: No memory available\n");
-#endif
+            dbg_printf(DEBUG_ERROR, "No memory available\n");
             goto Error;
         }
 
         pList->pItems[pList->Size++] = *pNode;
     }
-#ifdef DEBUG
     else
     {
-        dbg_printf("WARN: List reached max capacity\n");
+        Res = -EINVAL;
+        dbg_printf(DEBUG_WARN, "List reached max capacity\n");
+        goto Error;
     }
-#endif
     
 Error:
     return Res;
@@ -126,12 +121,10 @@ tMctn *mctn_list_get(tMctnList *pList, tIndex Index)
     {
         pTmp = &pList->pItems[Index];
     }
-#ifdef DEBUG
     else
     {
-        dbg_printf("WARN: List index out of bounds\n");
+        dbg_printf(DEBUG_WARN, "List index out of bounds\n");
     }
-#endif
 
     return pTmp;
 }
@@ -142,12 +135,10 @@ void mctn_list_set(tMctnList *pList, tIndex Index, tMctn *pNode)
     {
         pList->pItems[Index] = *pNode;
     }
-#ifdef DEBUG
     else
     {
-        dbg_printf("WARN: List index out of bounds\n");
+        dbg_printf(DEBUG_WARN, "List index out of bounds\n");
     }
-#endif
 }
 
 int mctn_list_delete(tMctnList *pList, tIndex Index)
@@ -165,18 +156,15 @@ int mctn_list_delete(tMctnList *pList, tIndex Index)
         if (pList->pItems IS NULL AND pList->Size > 0) 
         {
             Res = -ENOMEM;
-#ifdef DEBUG
-            dbg_printf("ERROR: No memory available\n");
-#endif
+            dbg_printf(DEBUG_ERROR, "No memory available\n");
             goto Error;
         }  
     }
-#ifdef DEBUG
     else
     {
-        dbg_printf("WARN: List index out of bounds\n");
+        dbg_printf(DEBUG_WARN, "List index out of bounds\n");
+        goto Error;
     }
-#endif 
 
 Error: 
     return Res;
@@ -189,7 +177,7 @@ void mctn_list_shuffle(tMctnList *pList, tRandom* pRand)
 
     for (i = pList->Size - 1; i > 0; --i) 
     {
-        j = rand_xorshft128(pRand) % (i + 1);
+        j = rand_next(pRand) % (i + 1);
         Tmp = *mctn_list_get(pList, j);
         mctn_list_set(pList, j, mctn_list_get(pList, i));
         mctn_list_set(pList, i, &Tmp);

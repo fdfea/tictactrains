@@ -10,7 +10,7 @@
 
 ### **Summary**
 
-An implementation of the board game TicTacTrains in C, including an artificially intelligent computer opponent and configurable rules. 
+An implementation of the board game TicTacTrains in C, including an artificially intelligent computer opponent and configurable rules.
 
 ### **Compiling**
 
@@ -56,6 +56,7 @@ The options are:
 * `SCORING_ALGORITHM` – The algorithm to score simulations when not predicting
 * `PREDICTION_POLICY` – When the computer should predict the score of simulations
 * `PREDICTION_STRATEGY` – How the computer should predict the outcome of a simulation
+* `STARTING_POSITION` – The position to start the game from
 
 See the configuration file for additional details. 
 
