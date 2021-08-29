@@ -11,7 +11,7 @@
 
 A deployable, full-stack website to play the board game TicTacTrains against online opponents or an artificially intelligent agent. 
 
-Try out the game [here](https://tictactrains.herokuapp.com/)!
+Try out the game [here](https://tictactrains.herokuapp.com/)! (Might take a minute or two to load.)
 
 ### **Modules**
 
